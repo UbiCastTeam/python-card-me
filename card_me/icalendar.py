@@ -51,18 +51,23 @@ def registerTzid(tzid, tzinfo):
 
 def getTzid(tzid, smart=True):
     """Return the tzid if it exists, or None."""
-    tz = __tzidMap.get(toUnicode(tzid), None)
-    if smart and tzid and not tz:
-        try:
-            from pytz import timezone, UnknownTimeZoneError
-            try:
-                tz = timezone(tzid)
-                registerTzid(toUnicode(tzid), tz)
-            except UnknownTimeZoneError:
-                pass
-        except ImportError:
-            pass
-    return tz
+    tzinfo = __tzidMap.get(toUnicode(tzid), None)
+    if smart and tzid and not tzinfo:
+        tzinfo = tz.gettz(tzid)
+        if tzinfo:
+            tzinfo.tzid = tzid
+            registerTzid(toUnicode(tzid), tzinfo)
+    return tzinfo
+
+
+def reloadCachedTz():
+    for tzid in __tzidMap.keys():
+        if tzid != "UTC":
+            tzinfo = tz.gettz(tzid)
+            if tzinfo:
+                tzinfo.tzid = tzid
+                registerTzid(toUnicode(tzid), tzinfo)
+
 
 utc = tz.tzutc()
 registerTzid("UTC", utc)
@@ -1918,14 +1923,13 @@ def getTransition(transitionTo, year, tzinfo):
         month = monthDt.month
         day = firstTransition(generateDates(year, month), test).day
         uncorrected = firstTransition(generateDates(year, month, day), test)
-        if transitionTo == 'standard':
-            # assuming tzinfo.dst returns a new offset for the first
-            # possible hour, we need to add one hour for the offset change
-            # and another hour because firstTransition returns the hour
-            # before the transition
-            return uncorrected + datetime.timedelta(hours=2)
-        else:
-            return uncorrected + datetime.timedelta(hours=1)
+        # firstTransition returns the hour before the transition
+        uncorrected += datetime.timedelta(hours=1)
+        # if transitionTo == 'standard':
+        #     # assuming tzinfo.dst returns a new offset for the first
+        #     # possible hour, we need to add one hour for the offset change
+        #     uncorrected += datetime.timedelta(hours=1)
+        return uncorrected
 
 
 def tzinfo_eq(tzinfo1, tzinfo2, startYear=2000, endYear=2020):
