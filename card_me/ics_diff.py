@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from optparse import OptionParser
 
 from .base import Component, getBehavior, newFromBehavior, readOne
@@ -7,6 +5,7 @@ from .base import Component, getBehavior, newFromBehavior, readOne
 """
 Compare VTODOs and VEVENTs in two iCalendar sources.
 """
+
 
 def getSortKey(component):
     def getUID(component):
@@ -28,8 +27,10 @@ def getSortKey(component):
 
     return getUID(component) + getSequence(component) + getRecurrenceID(component)
 
+
 def sortByUID(components):
     return sorted(components, key=getSortKey)
+
 
 def deleteExtraneous(component, ignore_dtstamp=False):
     """
@@ -43,6 +44,7 @@ def deleteExtraneous(component, ignore_dtstamp=False):
             del line.params['X-VOBJ-ORIGINAL-TZID']
     if ignore_dtstamp and hasattr(component, 'dtstamp_list'):
         del component.dtstamp_list
+
 
 def diff(left, right):
     """
@@ -67,7 +69,7 @@ def diff(left, right):
             if rightIndex >= rightListSize:
                 output.append((comp, None))
             else:
-                leftKey  = getSortKey(comp)
+                leftKey = getSortKey(comp)
                 rightComp = rightList[rightIndex]
                 rightKey = getSortKey(rightComp)
                 while leftKey > rightKey:
@@ -133,13 +135,13 @@ def diff(left, right):
         if len(differentContentLines) == 0 and len(differentComponents) == 0:
             return None
         else:
-            left  = newFromBehavior(leftComp.name)
+            left = newFromBehavior(leftComp.name)
             right = newFromBehavior(leftComp.name)
             # add a UID, if one existed, despite the fact that they'll always be
             # the same
             uid = leftComp.getChildValue('uid')
             if uid is not None:
-                left.add( 'uid').value = uid
+                left.add('uid').value = uid
                 right.add('uid').value = uid
 
             for name, childPairList in differentComponents.items():
@@ -161,7 +163,6 @@ def diff(left, right):
 
             return left, right
 
-
     vevents = processComponentLists(sortByUID(getattr(left, 'vevent_list', [])),
                                     sortByUID(getattr(right, 'vevent_list', [])))
 
@@ -169,6 +170,7 @@ def diff(left, right):
                                    sortByUID(getattr(right, 'vtodo_list', [])))
 
     return vevents + vtodos
+
 
 def prettyDiff(leftObj, rightObj):
     for left, right in diff(leftObj, rightObj):
@@ -187,16 +189,18 @@ def main():
     if args:
         ignore_dtstamp = options.ignore
         ics_file1, ics_file2 = args
-        cal1 = readOne(file(ics_file1))
-        cal2 = readOne(file(ics_file2))
+        cal1 = readOne(open(ics_file1))
+        cal2 = readOne(open(ics_file2))
         deleteExtraneous(cal1, ignore_dtstamp=ignore_dtstamp)
         deleteExtraneous(cal2, ignore_dtstamp=ignore_dtstamp)
         prettyDiff(cal1, cal2)
 
+
 version = "0.1"
 
+
 def getOptions():
-    ##### Configuration options #####
+    # #### Configuration options #### #
 
     usage = "usage: %prog [options] ics_file1 ics_file2"
     parser = OptionParser(usage=usage, version=version)
@@ -208,11 +212,11 @@ def getOptions():
     (cmdline_options, args) = parser.parse_args()
     if len(args) < 2:
         print("error: too few arguments given")
-        print
         print(parser.format_help())
         return False, False
 
     return cmdline_options, args
+
 
 if __name__ == "__main__":
     try:

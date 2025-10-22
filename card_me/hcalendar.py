@@ -12,7 +12,7 @@ URL:http://www.web2con.com/
 DTSTART:20051005
 DTEND:20051008
 SUMMARY:Web 2.0 Conference
-LOCATION:Argent Hotel\, San Francisco\, CA
+LOCATION:Argent Hotel\\, San Francisco\\, CA
 END:VEVENT
 END:VCALENDAR
 
@@ -46,7 +46,7 @@ class HCalendar(VCalendar2_0):
         """
 
         outbuf = buf or six.StringIO()
-        level = 0 # holds current indentation level
+        level = 0  # holds current indentation level
         tabwidth = 3
 
         def indent():
@@ -77,18 +77,20 @@ class HCalendar(VCalendar2_0):
             # DTSTART
             dtstart = event.getChildValue("dtstart")
             if dtstart:
-                if type(dtstart) == date:
-                    timeformat = "%A, %B %e"
-                    machine    = "%Y%m%d"
-                elif type(dtstart) == datetime:
+                if isinstance(dtstart, datetime):
                     timeformat = "%A, %B %e, %H:%M"
-                    machine    = "%Y%m%dT%H%M%S%z"
+                    machine = "%Y%m%dT%H%M%S%z"
+                elif isinstance(dtstart, date):
+                    timeformat = "%A, %B %e"
+                    machine = "%Y%m%d"
 
                 #TODO: Handle non-datetime formats?
                 #TODO: Spec says we should handle when dtstart isn't included
 
-                out('<abbr class="dtstart", title="%s">%s</abbr>\r\n' %
-                     (dtstart.strftime(machine), dtstart.strftime(timeformat)))
+                out(
+                    '<abbr class="dtstart", title="%s">%s</abbr>\r\n' %
+                    (dtstart.strftime(machine), dtstart.strftime(timeformat))
+                )
 
                 # DTEND
                 dtend = event.getChildValue("dtend")
@@ -96,16 +98,19 @@ class HCalendar(VCalendar2_0):
                     duration = event.getChildValue("duration")
                     if duration:
                         dtend = duration + dtstart
-                   # TODO: If lacking dtend & duration?
+                # TODO: If lacking dtend & duration?
 
                 if dtend:
-                    human = dtend
                     # TODO: Human readable part could be smarter, excluding repeated data
-                    if type(dtend) == date:
+                    if not isinstance(dtend, datetime):
                         human = dtend - timedelta(days=1)
+                    else:
+                        human = dtend
 
-                    out('- <abbr class="dtend", title="%s">%s</abbr>\r\n' %
-                     (dtend.strftime(machine), human.strftime(timeformat)))
+                    out(
+                        '- <abbr class="dtend", title="%s">%s</abbr>\r\n' %
+                        (dtend.strftime(machine), human.strftime(timeformat))
+                    )
 
             # LOCATION
             location = event.getChildValue("location")
@@ -121,8 +126,9 @@ class HCalendar(VCalendar2_0):
                 out('</a>' + CRLF)
 
             level -= 1
-            out('</span>' + CRLF) # close vevent
+            out('</span>' + CRLF)  # close vevent
 
         return buf or outbuf.getvalue()
+
 
 registerBehavior(HCalendar)

@@ -5,7 +5,6 @@ Card Me simplifies the process of parsing and creating iCalendar and vCard objec
 It is a fork of the venerable vobject library, improved, updated, substantially rewritten for Python3 support,
 and with some proper unit tests.
 
-[![Build Status](https://travis-ci.org/tBaxter/python-card-me.svg?branch=master)](https://travis-ci.org/tBaxter/python-card-me)
 
 --------------
  Installation
@@ -220,3 +219,19 @@ serializing will add any required computable attributes (like 'VERSION')
 >>> v.n.value.family
 u'Smith'
 ```
+
+## Acknowledgements
+
+None of this code would be here without the work Jeffrey Harris and Skyhouse Consulting put into the original vobject.
+
+Thanks also to…
+
+Adieu for keeping things alive on github.
+
+Kristian Glass for his enormous help with testing and Python3 matters.
+
+Gustavo Niemeyer, for all his work on dateutil
+
+Dave Cridland, for helping talk about vobject and working on vcard
+
+TJ Gabbour, for putting his heart into parsing

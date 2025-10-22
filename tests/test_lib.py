@@ -1,9 +1,5 @@
-#-*- coding: utf-8 -*-
-from __future__ import print_function
-
 import datetime
 import dateutil
-import io
 import re
 import sys
 import unittest
@@ -22,14 +18,14 @@ from card_me.change_tz import change_tz
 from card_me.icalendar import MultiDateBehavior, PeriodBehavior, RecurringComponent, utc
 from card_me.icalendar import parseDtstart, stringToTextValues, stringToPeriod, timedeltaToString
 
-twoHours  = datetime.timedelta(hours=2)
+twoHours = datetime.timedelta(hours=2)
 
 
 def get_test_file(path):
     """
     Helper function to open and read test files.
     """
-    filepath = "test_files/{}".format(path)
+    filepath = "tests/files/{}".format(path)
     if sys.version_info[0] < 3:
         # On python 2, this library operates on bytes.
         f = open(filepath, 'r')
@@ -52,7 +48,10 @@ class TestCalendarSerializing(unittest.TestCase):
         cal.add('vevent')
         cal.vevent.add('dtstart').value = datetime.datetime(2006, 5, 9)
         cal.vevent.add('description').value = "Test event"
-        cal.vevent.add('created').value = datetime.datetime(2006, 1, 1, 10, tzinfo=dateutil.tz.tzical("test_files/timezones.ics").get('US/Pacific'))
+        cal.vevent.add('created').value = datetime.datetime(
+            2006, 1, 1, 10,
+            tzinfo=dateutil.tz.tzical("tests/files/timezones.ics").get('US/Pacific')
+        )
         cal.vevent.add('uid').value = "Not very random UID"
 
         # Note we're normalizing line endings, because no one got time for that.
@@ -126,7 +125,7 @@ class TestCalendarSerializing(unittest.TestCase):
         This test will have to wait.
 
 
-        tzs = dateutil.tz.tzical("test_files/timezones.ics")
+        tzs = dateutil.tz.tzical("tests/files/timezones.ics")
         cal = base.newFromBehavior('hcalendar')
         self.assertEqual(
             str(cal.behavior),
@@ -169,15 +168,67 @@ class TestCalendarSerializing(unittest.TestCase):
 
 
 class TestBehaviors(unittest.TestCase):
+    maxDiff = None
+
     def test_general_behavior(self):
         """
         Tests for behavior registry, getting and creating a behavior.
         """
         # Check expected behavior registry.
-        self.assertEqual(
-            sorted(behavior_registry.keys()),
-            ['', 'ACTION', 'ADR', 'AVAILABLE', 'BUSYTYPE', 'CALSCALE', 'CATEGORIES', 'CLASS', 'COMMENT', 'COMPLETED', 'CONTACT', 'CREATED', 'DAYLIGHT', 'DESCRIPTION', 'DTEND', 'DTSTAMP', 'DTSTART', 'DUE', 'DURATION', 'EXDATE', 'EXRULE', 'FN', 'FREEBUSY', 'LABEL', 'LAST-MODIFIED', 'LOCATION', 'METHOD', 'N', 'ORG', 'PHOTO', 'PRODID', 'RDATE', 'RECURRENCE-ID', 'RELATED-TO', 'REQUEST-STATUS', 'RESOURCES', 'RRULE', 'STANDARD', 'STATUS', 'SUMMARY', 'TRANSP', 'TRIGGER', 'UID', 'VALARM', 'VAVAILABILITY', 'VCALENDAR', 'VCARD', 'VEVENT', 'VFREEBUSY', 'VJOURNAL', 'VTIMEZONE', 'VTODO']
-        )
+        self.assertEqual(sorted(behavior_registry.keys()), [
+            '',
+            'ACTION',
+            'ADR',
+            'AVAILABLE',
+            'BUSYTYPE',
+            'CALSCALE',
+            'CATEGORIES',
+            'CLASS',
+            'COMMENT',
+            'COMPLETED',
+            'CONTACT',
+            'CREATED',
+            'DAYLIGHT',
+            'DESCRIPTION',
+            'DTEND',
+            'DTSTAMP',
+            'DTSTART',
+            'DUE',
+            'DURATION',
+            'EXDATE',
+            'EXRULE',
+            'FN',
+            'FREEBUSY',
+            'LABEL',
+            'LAST-MODIFIED',
+            'LOCATION',
+            'METHOD',
+            'N',
+            'ORG',
+            'PHOTO',
+            'PRODID',
+            'RDATE',
+            'RECURRENCE-ID',
+            'RELATED-TO',
+            'REQUEST-STATUS',
+            'RESOURCES',
+            'RRULE',
+            'STANDARD',
+            'STATUS',
+            'SUMMARY',
+            'TRANSP',
+            'TRIGGER',
+            'UID',
+            'VALARM',
+            'VAVAILABILITY',
+            'VCALENDAR',
+            'VCARD',
+            'VEVENT',
+            'VFREEBUSY',
+            'VJOURNAL',
+            'VTIMEZONE',
+            'VTODO'
+        ])
 
         # test get_behavior
         behavior = base.getBehavior('VCALENDAR')
@@ -198,12 +249,24 @@ class TestBehaviors(unittest.TestCase):
     def test_MultiDateBehavior(self):
         parseRDate = MultiDateBehavior.transformToNative
         self.assertEqual(
-            str(parseRDate(textLineToContentLine("RDATE;VALUE=DATE:19970304,19970504,19970704,19970904"))),
-            "<RDATE{'VALUE': ['DATE']}[datetime.date(1997, 3, 4), datetime.date(1997, 5, 4), datetime.date(1997, 7, 4), datetime.date(1997, 9, 4)]>"
+            str(parseRDate(
+                textLineToContentLine("RDATE;VALUE=DATE:19970304,19970504,19970704,19970904")
+            )),
+            "<RDATE{'VALUE': ['DATE']}["
+            "datetime.date(1997, 3, 4), "
+            "datetime.date(1997, 5, 4), "
+            "datetime.date(1997, 7, 4), "
+            "datetime.date(1997, 9, 4)]>"
         )
         self.assertEqual(
-            str(parseRDate(textLineToContentLine("RDATE;VALUE=PERIOD:19960403T020000Z/19960403T040000Z,19960404T010000Z/PT3H"))),
-            "<RDATE{'VALUE': ['PERIOD']}[(datetime.datetime(1996, 4, 3, 2, 0, tzinfo=tzutc()), datetime.datetime(1996, 4, 3, 4, 0, tzinfo=tzutc())), (datetime.datetime(1996, 4, 4, 1, 0, tzinfo=tzutc()), datetime.timedelta(0, 10800))]>"
+            str(parseRDate(
+                textLineToContentLine("RDATE;VALUE=PERIOD:19960403T020000Z/19960403T040000Z,19960404T010000Z/PT3H")
+            )),
+            "<RDATE{'VALUE': ['PERIOD']}[("
+            "datetime.datetime(1996, 4, 3, 2, 0, tzinfo=tzutc()), "
+            "datetime.datetime(1996, 4, 3, 4, 0, tzinfo=tzutc())), "
+            "(datetime.datetime(1996, 4, 4, 1, 0, tzinfo=tzutc()), "
+            "datetime.timedelta(seconds=10800))]>"
         )
 
     def test_periodBehavior(self):
@@ -227,15 +290,19 @@ class TestBehaviors(unittest.TestCase):
             'TEST:20060216T100000/PT2H,20060516T100000/PT2H'
         )
 
+
 class TestVTodo(unittest.TestCase):
+    maxDiff = None
+
     def test_vtodo(self):
         vtodo = get_test_file("vtodo.ics")
         obj = base.readOne(vtodo)
         obj.vtodo.add('completed')
-        obj.vtodo.completed.value = datetime.datetime(2015,5,5,13,30)
+        obj.vtodo.completed.value = datetime.datetime(2015, 5, 5, 13, 30)
         self.assertEqual(obj.vtodo.completed.serialize()[0:23], 'COMPLETED:20150505T1330')
         obj = base.readOne(obj.serialize())
-        self.assertEqual(obj.vtodo.completed.value, datetime.datetime(2015,5,5,13,30))
+        self.assertEqual(obj.vtodo.completed.value, datetime.datetime(2015, 5, 5, 13, 30))
+
 
 class TestVobject(unittest.TestCase):
     maxDiff = None
@@ -257,8 +324,10 @@ class TestVobject(unittest.TestCase):
             ('RDATE', [], 'VALUE=DATE:19970304,19970504,19970704,19970904', None)
         )
         self.assertEqual(
-            parseLine('DESCRIPTION;ALTREP="http://www.wiz.org":The Fall 98 Wild Wizards Conference - - Las Vegas, NV, USA'),
-            ('DESCRIPTION', [['ALTREP', 'http://www.wiz.org']], 'The Fall 98 Wild Wizards Conference - - Las Vegas, NV, USA', None)
+            parseLine('DESCRIPTION;ALTREP="http://www.wiz.org":'
+                      'The Fall 98 Wild Wizards Conference - - Las Vegas, NV, USA'),
+            ('DESCRIPTION', [['ALTREP', 'http://www.wiz.org']],
+             'The Fall 98 Wild Wizards Conference - - Las Vegas, NV, USA', None)
         )
         self.assertEqual(
             parseLine("EMAIL;PREF;INTERNET:john@nowhere.com"),
@@ -279,12 +348,16 @@ class TestGeneralFileParsing(unittest.TestCase):
     """
     General tests for parsing ics files.
     """
+    maxDiff = None
+
     def test_readOne(self):
         cal = get_test_file("silly_test.ics")
         silly = base.readOne(cal, findBegin=False)
         self.assertEqual(
             str(silly),
-            "<SILLYPROFILE| [<MORESTUFF{}this line is not folded, but in practice probably ought to be, as it is exceptionally long, and moreover demonstratively stupid>, <SILLYNAME{}name>, <STUFF{}foldedline>]>"
+            "<SILLYPROFILE| [<MORESTUFF{}this line is not folded, but in practice probably ought to be, "
+            "as it is exceptionally long, and moreover demonstratively stupid>, "
+            "<SILLYNAME{}name>, <STUFF{}foldedline>]>"
         )
         self.assertEqual(
             str(silly.stuff),
@@ -350,6 +423,7 @@ class TestGeneralFileParsing(unittest.TestCase):
 
 
 class TestVcards(unittest.TestCase):
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -401,7 +475,6 @@ class TestVcards(unittest.TestCase):
             'new.BEGIN:VCARD'
         )
 
-
     def test_vcard_3_parsing(self):
         """
         VCARD 3.0 parse test
@@ -424,6 +497,7 @@ class TestIcalendar(unittest.TestCase):
     Tests for icalendar.py
     """
     maxDiff = None
+
     def test_parseDTStart(self):
         """
         Should take a content line and return a datetime object.
@@ -495,7 +569,7 @@ class TestIcalendar(unittest.TestCase):
         )
 
     def test_vtimezone_creation(self):
-        tzs = dateutil.tz.tzical("test_files/timezones.ics")
+        tzs = dateutil.tz.tzical("tests/files/timezones.ics")
         pacific = icalendar.TimezoneComponent(tzs.get('US/Pacific'))
         self.assertEqual(
             str(pacific),
@@ -508,7 +582,7 @@ class TestIcalendar(unittest.TestCase):
         )
         for year in range(2001, 2010):
             for month in (2, 9):
-                dt = datetime.datetime(year, month, 15, tzinfo = tzs.get('Santiago'))
+                dt = datetime.datetime(year, month, 15, tzinfo=tzs.get('Santiago'))
                 #if dt.replace(tzinfo=tzs.get('Santiago')) != dt:
                 self.assertTrue(dt.replace(tzinfo=tzs.get('Santiago')), dt)
 
@@ -516,30 +590,30 @@ class TestIcalendar(unittest.TestCase):
         """
         Serializing with timezones test
         """
-        tzs = dateutil.tz.tzical("test_files/timezones.ics")
+        tzs = dateutil.tz.tzical("tests/files/timezones.ics")
         pacific = tzs.get('US/Pacific')
         cal = base.Component('VCALENDAR')
         cal.setBehavior(icalendar.VCalendar2_0)
         ev = cal.add('vevent')
-        ev.add('dtstart').value = datetime.datetime(2005, 10, 12, 9, tzinfo = pacific)
+        ev.add('dtstart').value = datetime.datetime(2005, 10, 12, 9, tzinfo=pacific)
         evruleset = rruleset()
-        evruleset.rrule(rrule(WEEKLY, interval=2, byweekday=[2,4], until=datetime.datetime(2005, 12, 15, 9)))
-        evruleset.rrule(rrule(MONTHLY, bymonthday=[-1,-5]))
-        evruleset.exdate(datetime.datetime(2005, 10, 14, 9, tzinfo = pacific))
+        evruleset.rrule(rrule(WEEKLY, interval=2, byweekday=[2, 4], until=datetime.datetime(2005, 12, 15, 9)))
+        evruleset.rrule(rrule(MONTHLY, bymonthday=[-1, -5]))
+        evruleset.exdate(datetime.datetime(2005, 10, 14, 9, tzinfo=pacific))
         ev.rruleset = evruleset
         ev.add('duration').value = datetime.timedelta(hours=1)
 
         # breaking date?
         #self.assertEqual(
         #    cal.serialize().replace('\r\n', '\n'),
-        #    """BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//PYVOBJECT//NONSGML Version 1//EN\nBEGIN:VTIMEZONE\nTZID:US/Pacific\nBEGIN:STANDARD\nDTSTART:20001029T020000\nRRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10\nTZNAME:PST\nTZOFFSETFROM:-0700\nTZOFFSETTO:-0800\nEND:STANDARD\nBEGIN:DAYLIGHT\nDTSTART:20000402T020000\nRRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4\nTZNAME:PDT\nTZOFFSETFROM:-0800\nTZOFFSETTO:-0700\nEND:DAYLIGHT\nEND:VTIMEZONE\nBEGIN:VEVENT\nUID:20150108T142459Z - 64333@testing-worker-linux-12-2-29839-linux-6-46319\n358\nDTSTART;TZID=US/Pacific:20051012T090000\nDURATION:PT1H\nEXDATE;TZID=US/Pacific:20051014T090000\nRRULE:FREQ=WEEKLY;BYDAY=WE,FR;INTERVAL=2;UNTIL=20051215T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=-5,-1\nEND:VEVENT\nEND:VCALENDAR\n"""
+        #    """BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//PYVOBJECT//NONSGML Version 1//EN\nBEGIN:VTIMEZONE\nTZID:US/Pacific\nBEGIN:STANDARD\nDTSTART:20001029T020000\nRRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10\nTZNAME:PST\nTZOFFSETFROM:-0700\nTZOFFSETTO:-0800\nEND:STANDARD\nBEGIN:DAYLIGHT\nDTSTART:20000402T020000\nRRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4\nTZNAME:PDT\nTZOFFSETFROM:-0800\nTZOFFSETTO:-0700\nEND:DAYLIGHT\nEND:VTIMEZONE\nBEGIN:VEVENT\nUID:20150108T142459Z - 64333@testing-worker-linux-12-2-29839-linux-6-46319\n358\nDTSTART;TZID=US/Pacific:20051012T090000\nDURATION:PT1H\nEXDATE;TZID=US/Pacific:20051014T090000\nRRULE:FREQ=WEEKLY;BYDAY=WE,FR;INTERVAL=2;UNTIL=20051215T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=-5,-1\nEND:VEVENT\nEND:VCALENDAR\n""" # noqa
         #)
 
         apple = tzs.get('America/Montreal')
-        ev.dtstart.value = datetime.datetime(2005, 10, 12, 9, tzinfo = apple)
+        ev.dtstart.value = datetime.datetime(2005, 10, 12, 9, tzinfo=apple)
         #self.assertEqual(
         #    cal.serialize().replace('\r\n', ''),
-        #    """BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//PYVOBJECT//NONSGML Version 1//EN\nBEGIN:VTIMEZONE\nTZID:America/Montreal\nBEGIN:STANDARD\nDTSTART:20000101T000000\nRRULE:FREQ=YEARLY;BYMONTH=1;UNTIL=20040101T050000Z\nTZNAME:EST\nTZOFFSETFROM:-0500\nTZOFFSETTO:-0500\nEND:STANDARD\nBEGIN:STANDARD\nDTSTART:20051030T020000\nRRULE:FREQ=YEARLY;BYDAY=5SU;BYMONTH=10\nTZNAME:EST\nTZOFFSETFROM:-0400\nTZOFFSETTO:-0500\nEND:STANDARD\nBEGIN:DAYLIGHT\nDTSTART:20050403T070000\nRRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4;UNTIL=20050403T120000Z\nTZNAME:EDT\nTZOFFSETFROM:-0500\nTZOFFSETTO:-0400\nEND:DAYLIGHT\nEND:VTIMEZONE\nBEGIN:VEVENT\nUID:20150108T164047Z - 11645@testing-worker-linux-12-1-29784-linux-12-4633\n5445\nDTSTART;TZID=America/Montreal:20051012T090000\nDURATION:PT1H\nEXDATE;TZID=US/Pacific:20051014T090000\nRRULE:FREQ=WEEKLY;BYDAY=WE,FR;INTERVAL=2;UNTIL=20051215T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=-5,-1\nEND:VEVENT\nEND:VCALENDAR\n"""
+        #    """BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//PYVOBJECT//NONSGML Version 1//EN\nBEGIN:VTIMEZONE\nTZID:America/Montreal\nBEGIN:STANDARD\nDTSTART:20000101T000000\nRRULE:FREQ=YEARLY;BYMONTH=1;UNTIL=20040101T050000Z\nTZNAME:EST\nTZOFFSETFROM:-0500\nTZOFFSETTO:-0500\nEND:STANDARD\nBEGIN:STANDARD\nDTSTART:20051030T020000\nRRULE:FREQ=YEARLY;BYDAY=5SU;BYMONTH=10\nTZNAME:EST\nTZOFFSETFROM:-0400\nTZOFFSETTO:-0500\nEND:STANDARD\nBEGIN:DAYLIGHT\nDTSTART:20050403T070000\nRRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4;UNTIL=20050403T120000Z\nTZNAME:EDT\nTZOFFSETFROM:-0500\nTZOFFSETTO:-0400\nEND:DAYLIGHT\nEND:VTIMEZONE\nBEGIN:VEVENT\nUID:20150108T164047Z - 11645@testing-worker-linux-12-1-29784-linux-12-4633\n5445\nDTSTART;TZID=America/Montreal:20051012T090000\nDURATION:PT1H\nEXDATE;TZID=US/Pacific:20051014T090000\nRRULE:FREQ=WEEKLY;BYDAY=WE,FR;INTERVAL=2;UNTIL=20051215T090000\nRRULE:FREQ=MONTHLY;BYMONTHDAY=-5,-1\nEND:VEVENT\nEND:VCALENDAR\n""" # noqa
         #)
 
     def test_freeBusy(self):
@@ -548,7 +622,7 @@ class TestIcalendar(unittest.TestCase):
         vfb = base.newFromBehavior('VFREEBUSY')
         vfb.add('uid').value = 'test'
         vfb.add('dtstart').value = datetime.datetime(2006, 2, 16, 1, tzinfo=utc)
-        vfb.add('dtend').value   = vfb.dtstart.value + twoHours
+        vfb.add('dtend').value = vfb.dtstart.value + twoHours
         vfb.add('freebusy').value = [(vfb.dtstart.value, twoHours / 2)]
         vfb.add('freebusy').value = [(vfb.dtstart.value, vfb.dtend.value)]
 
@@ -564,14 +638,14 @@ class TestIcalendar(unittest.TestCase):
         vcal.add('uid').value = 'test'
         vcal.add('dtstamp').value = datetime.datetime(2006, 2, 15, 0, tzinfo=utc)
         vcal.add('dtstart').value = datetime.datetime(2006, 2, 16, 0, tzinfo=utc)
-        vcal.add('dtend').value   = datetime.datetime(2006, 2, 17, 0, tzinfo=utc)
+        vcal.add('dtend').value = datetime.datetime(2006, 2, 17, 0, tzinfo=utc)
         vcal.add('busytype').value = "BUSY"
 
         av = base.newFromBehavior('AVAILABLE')
         av.add('uid').value = 'test1'
         av.add('dtstamp').value = datetime.datetime(2006, 2, 15, 0, tzinfo=utc)
         av.add('dtstart').value = datetime.datetime(2006, 2, 16, 9, tzinfo=utc)
-        av.add('dtend').value   = datetime.datetime(2006, 2, 16, 12, tzinfo=utc)
+        av.add('dtend').value = datetime.datetime(2006, 2, 16, 12, tzinfo=utc)
         av.add('summary').value = "Available in the morning"
 
         vcal.add(av)
@@ -612,7 +686,7 @@ class TestIcalendar(unittest.TestCase):
 
         # Now add start and rule for recurring event
         vevent.add('dtstart').value = datetime.datetime(2005, 1, 19, 9)
-        vevent.add('rrule').value =u"FREQ=WEEKLY;COUNT=2;INTERVAL=2;BYDAY=TU,TH"
+        vevent.add('rrule').value = "FREQ=WEEKLY;COUNT=2;INTERVAL=2;BYDAY=TU,TH"
         self.assertEqual(
             list(vevent.rruleset),
             [datetime.datetime(2005, 1, 20, 9, 0), datetime.datetime(2005, 2, 1, 9, 0)]
@@ -624,7 +698,7 @@ class TestIcalendar(unittest.TestCase):
 
         # Also note that dateutil will expand all-day events (datetime.date values)
         # to datetime.datetime value with time 0 and no timezone.
-        vevent.dtstart.value = datetime.date(2005,3,18)
+        vevent.dtstart.value = datetime.date(2005, 3, 18)
         self.assertEqual(
             list(vevent.rruleset),
             [datetime.datetime(2005, 3, 29, 0, 0), datetime.datetime(2005, 3, 31, 0, 0)]
@@ -717,7 +791,6 @@ class TestChangeTZ(unittest.TestCase):
         don't have one"""
 
         # Setup - create a stub vevent list
-        old_tz = dateutil.tz.gettz('UTC')  # 0:00
         new_tz = dateutil.tz.gettz('America/Chicago')  # -5:00
 
         dates = [
@@ -738,7 +811,3 @@ class TestChangeTZ(unittest.TestCase):
                                              expected_new_dates):
             self.assertEqual(vevent.dtstart.value, expected_datepair[0])
             self.assertEqual(vevent.dtend.value, expected_datepair[1])
-
-
-if __name__ == '__main__':
-    unittest.main()
