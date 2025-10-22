@@ -1,5 +1,7 @@
+__pycache__/
 *.py[cod]
 
+# Distribution / packaging
 *.egg
 *.egg-info
 dist
@@ -7,6 +9,11 @@ eggs
 parts
 develop-eggs
 .installed.cfg
-__pycache__
 
-*.gz
+# Unit test / coverage reports
+.coverage*
+coverage*
+htmlcov
+report.xml
+.mypy_cache
+.pytest_cache
